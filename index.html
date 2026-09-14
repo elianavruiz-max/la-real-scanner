@@ -6,146 +6,53 @@
   <title>Lector La Real</title>
 
   <style>
-    :root{
-      --olive:#556B2F;
-      --cream:#F7F3EA;
-      --dark:#222;
-    }
-
+    :root{--olive:#556B2F;--cream:#F7F3EA;--dark:#222}
     *{box-sizing:border-box}
-
-    html,body{
-      margin:0;
-      width:100%;
-      height:100%;
-      background:#111;
-      font-family:Arial,Helvetica,sans-serif;
-    }
-
+    html,body{margin:0;width:100%;height:100%;background:#111;font-family:Arial,Helvetica,sans-serif}
     body{color:#fff}
+    #scanner{position:fixed;inset:0;overflow:hidden;background:#111}
+    #scanner video{width:100%!important;height:100%!important;object-fit:cover!important}
+    #scanner canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
 
-    #scanner{
-      position:fixed;
-      inset:0;
-      overflow:hidden;
-      background:#111;
-    }
-
-    #scanner video{
-      width:100%!important;
-      height:100%!important;
-      object-fit:cover!important;
-    }
-
-    #scanner canvas{
-      position:absolute;
-      inset:0;
-      width:100%!important;
-      height:100%!important;
-    }
-
-    .shade{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-    }
-
+    .shade{position:fixed;inset:0;pointer-events:none}
     .guide{
-      position:absolute;
-      left:6%;
-      right:6%;
-      top:36%;
-      height:28%;
-      border:3px solid rgba(255,255,255,.95);
-      border-radius:18px;
-      box-shadow:0 0 0 9999px rgba(0,0,0,.40);
+      position:absolute;left:6%;right:6%;top:36%;height:28%;
+      border:3px solid rgba(255,255,255,.95);border-radius:18px;
+      box-shadow:0 0 0 9999px rgba(0,0,0,.40)
     }
-
-    .line{
-      position:absolute;
-      left:5%;
-      right:5%;
-      top:50%;
-      height:2px;
-      background:rgba(255,255,255,.9);
-    }
+    .line{position:absolute;left:5%;right:5%;top:50%;height:2px;background:rgba(255,255,255,.9)}
 
     .top{
-      position:fixed;
-      top:0;
-      left:0;
-      right:0;
+      position:fixed;top:0;left:0;right:0;
       padding:calc(14px + env(safe-area-inset-top)) 16px 14px;
-      text-align:center;
-      background:linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));
-      z-index:10;
+      text-align:center;background:linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));z-index:10
     }
-
     .top b{font-size:20px}
 
     .bottom{
-      position:fixed;
-      bottom:0;
-      left:0;
-      right:0;
-      z-index:10;
+      position:fixed;bottom:0;left:0;right:0;z-index:10;
       padding:18px 16px calc(18px + env(safe-area-inset-bottom));
-      background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.88));
-      text-align:center;
+      background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.88));text-align:center
     }
 
-    #status{
-      min-height:24px;
-      font-size:16px;
-      font-weight:bold;
-      margin-bottom:10px;
-    }
+    #status{min-height:24px;font-size:16px;font-weight:bold;margin-bottom:10px}
 
     button{
-      width:100%;
-      max-width:460px;
-      border:0;
-      border-radius:14px;
-      padding:15px;
-      font-size:17px;
-      font-weight:bold;
-      margin:5px auto;
+      width:100%;max-width:460px;border:0;border-radius:14px;
+      padding:15px;font-size:17px;font-weight:bold;margin:5px auto
     }
 
-    .primary{
-      background:var(--olive);
-      color:#fff;
-    }
-
-    .secondary{
-      background:#fff;
-      color:#222;
-    }
-
-    .hidden{
-      display:none!important;
-    }
+    .primary{background:var(--olive);color:#fff}
+    .secondary{background:#fff;color:#222}
+    .hidden{display:none!important}
 
     #resultBox{
-      position:fixed;
-      inset:0;
-      z-index:30;
-      background:var(--cream);
-      color:var(--dark);
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;
-      padding:24px;
-      text-align:center;
+      position:fixed;inset:0;z-index:30;background:var(--cream);color:var(--dark);
+      display:flex;flex-direction:column;justify-content:center;align-items:center;
+      padding:24px;text-align:center
     }
 
-    #resultCode{
-      font-size:32px;
-      font-weight:bold;
-      word-break:break-all;
-      margin:16px 0;
-    }
+    #resultCode{font-size:32px;font-weight:bold;word-break:break-all;margin:16px 0}
   </style>
 </head>
 
@@ -154,9 +61,7 @@
 <div id="scanner"></div>
 
 <div class="shade">
-  <div class="guide">
-    <div class="line"></div>
-  </div>
+  <div class="guide"><div class="line"></div></div>
 </div>
 
 <div class="top">
@@ -166,24 +71,15 @@
 
 <div class="bottom">
   <div id="status">Preparando cámara…</div>
-
-  <button id="retryBtn" class="primary hidden" onclick="manualStart()">
-    ACTIVAR CÁMARA
-  </button>
-
-  <button class="secondary" onclick="cancelReader()">
-    CANCELAR
-  </button>
+  <button id="retryBtn" class="primary hidden" onclick="manualStart()">ACTIVAR CÁMARA</button>
+  <button class="secondary" onclick="cancelReader()">CANCELAR</button>
 </div>
 
 <div id="resultBox" class="hidden">
   <div>Código detectado</div>
   <div id="resultCode"></div>
-  <div id="resultMsg">Volviendo al inventario…</div>
-
-  <button id="backBtn" class="secondary hidden" onclick="returnToInventory()">
-    VOLVER AL INVENTARIO
-  </button>
+  <div id="resultMsg">Procesando…</div>
+  <button id="backBtn" class="secondary hidden" onclick="returnToInventory()">VOLVER AL INVENTARIO</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.12.1/dist/quagga.min.js"></script>
@@ -196,7 +92,8 @@ let acceptedCode='';
 let candidateCode='';
 let candidateCount=0;
 let candidateAt=0;
-let lastProcessedAt=0;
+let ackReceived=false;
+let ackTimer=null;
 
 function setStatus(text){
   document.getElementById('status').textContent=text;
@@ -211,6 +108,12 @@ function hideRetry(){
 }
 
 function scannerConfig(){
+  /*
+   * Configuración equilibrada:
+   * - suficientemente liviana para iPhone
+   * - compatible con Android/Chrome
+   * - mantiene buena lectura de EAN/UPC
+   */
   return {
     inputStream:{
       name:'Live',
@@ -218,25 +121,25 @@ function scannerConfig(){
       target:document.querySelector('#scanner'),
       constraints:{
         facingMode:{ideal:'environment'},
-        width:{ideal:1920},
-        height:{ideal:1080},
+        width:{ideal:1280},
+        height:{ideal:720},
         aspectRatio:{ideal:1.7777778}
       },
       area:{
-        top:'28%',
-        right:'4%',
-        left:'4%',
-        bottom:'28%'
+        top:'30%',
+        right:'5%',
+        left:'5%',
+        bottom:'30%'
       }
     },
 
     locator:{
       patchSize:'medium',
-      halfSample:false
+      halfSample:true
     },
 
     numOfWorkers:Math.max(1,Math.min(2,navigator.hardwareConcurrency||2)),
-    frequency:15,
+    frequency:12,
 
     decoder:{
       readers:[
@@ -259,13 +162,16 @@ async function releaseCamera(){
 
   try{
     const video=document.querySelector('#scanner video');
+
     if(video){
       const stream=video.srcObject;
-      if(stream&&stream.getTracks){
-        stream.getTracks().forEach(t=>{
-          try{t.stop()}catch(e){}
+
+      if(stream && stream.getTracks){
+        stream.getTracks().forEach(track=>{
+          try{track.stop()}catch(e){}
         });
       }
+
       try{video.pause()}catch(e){}
       try{video.srcObject=null}catch(e){}
     }
@@ -273,18 +179,16 @@ async function releaseCamera(){
 
   running=false;
   starting=false;
-
-  await new Promise(resolve=>setTimeout(resolve,300));
 }
 
 async function startScanner(){
-  if(running||starting||locked)return;
+  if(running || starting || locked) return;
 
   starting=true;
   hideRetry();
   setStatus('Solicitando cámara trasera…');
 
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     starting=false;
     setStatus('Este navegador no permite utilizar la cámara.');
     showRetry();
@@ -296,7 +200,10 @@ async function startScanner(){
 
   try{
     await new Promise((resolve,reject)=>{
-      Quagga.init(scannerConfig(),err=>err?reject(err):resolve());
+      Quagga.init(
+        scannerConfig(),
+        err=>err ? reject(err) : resolve()
+      );
     });
 
     Quagga.offDetected(onDetected);
@@ -307,36 +214,44 @@ async function startScanner(){
     starting=false;
     setStatus('Apuntá al código de barras');
 
+    /*
+     * Mejora de foco/zoom cuando existe.
+     * No bloquea equipos que no lo soportan.
+     */
     setTimeout(async()=>{
       try{
         const track=Quagga.CameraAccess.getActiveTrack();
-        if(!track||!track.getCapabilities)return;
+
+        if(!track || !track.getCapabilities) return;
 
         const caps=track.getCapabilities();
         const advanced={};
 
-        if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous')){
+        if(Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')){
           advanced.focusMode='continuous';
         }
 
-        if(caps.zoom&&typeof caps.zoom.min==='number'&&typeof caps.zoom.max==='number'){
-          const wanted=Math.min(caps.zoom.max,Math.max(caps.zoom.min,1.5));
-          advanced.zoom=wanted;
+        if(caps.zoom && typeof caps.zoom.min==='number' && typeof caps.zoom.max==='number'){
+          advanced.zoom=Math.min(
+            caps.zoom.max,
+            Math.max(caps.zoom.min,1.35)
+          );
         }
 
         if(Object.keys(advanced).length){
           await track.applyConstraints({advanced:[advanced]});
         }
-      }catch(e){
-        console.log('Foco/zoom no disponible:',e);
-      }
-    },700);
+      }catch(e){}
+    },450);
 
   }catch(err){
     console.error('ERROR CAMARA:',err);
+
     running=false;
     starting=false;
+
     await releaseCamera();
+
     setStatus(cameraErrorMessage(err));
     showRetry();
   }
@@ -347,50 +262,43 @@ async function manualStart(){
   candidateCode='';
   candidateCount=0;
   candidateAt=0;
-  lastProcessedAt=0;
 
   await releaseCamera();
-  setTimeout(startScanner,450);
+
+  setTimeout(startScanner,300);
 }
 
 function validEAN13(code){
-  if(!/^\d{13}$/.test(code))return false;
+  if(!/^\d{13}$/.test(code)) return false;
 
   const d=code.split('').map(Number);
   let sum=0;
 
   for(let i=0;i<12;i++){
-    sum+=d[i]*(i%2===0?1:3);
+    sum+=d[i]*(i%2===0 ? 1 : 3);
   }
 
-  const check=(10-(sum%10))%10;
-  return check===d[12];
+  return ((10-(sum%10))%10)===d[12];
 }
 
 function onDetected(result){
-  if(locked||!result||!result.codeResult)return;
-
-  const now=Date.now();
-
-  /* Evita procesar demasiados callbacks idénticos en milisegundos. */
-  if(now-lastProcessedAt<120)return;
-  lastProcessedAt=now;
+  if(locked || !result || !result.codeResult) return;
 
   const code=String(result.codeResult.code||'').trim();
 
-  if(!code||code.length<3)return;
+  if(!code || code.length<3) return;
 
   /*
-   * Los EAN-13 con dígito verificador correcto se aceptan más rápido.
-   * Para otros formatos mantenemos confirmación doble.
+   * Si es un EAN13 válido lo aceptamos de inmediato.
    */
   if(validEAN13(code)){
-    setStatus('Código detectado: '+code);
     acceptCode(code);
     return;
   }
 
-  if(code===candidateCode&&now-candidateAt<2200){
+  const now=Date.now();
+
+  if(code===candidateCode && now-candidateAt<1800){
     candidateCount++;
   }else{
     candidateCode=code;
@@ -407,44 +315,117 @@ function onDetected(result){
   acceptCode(code);
 }
 
-async function acceptCode(code){
-  if(locked)return;
+function getReturnUrl(){
+  try{
+    const params=new URLSearchParams(location.search);
+    const raw=params.get('returnUrl') || params.get('callback') || '';
+
+    if(!raw) return '';
+
+    const u=new URL(raw);
+
+    /*
+     * Nunca regresamos a googleusercontent.com:
+     * esas URLs son temporales y pueden quedar en blanco.
+     */
+    if(u.hostname.endsWith('googleusercontent.com')){
+      return '';
+    }
+
+    return raw;
+  }catch(e){
+    return '';
+  }
+}
+
+function closeAfterAck(){
+  /*
+   * La app ya recibió el código.
+   * Liberamos la cámara sin esperas largas y cerramos.
+   */
+  releaseCamera();
+
+  setTimeout(()=>{
+    try{window.close()}catch(e){}
+
+    setTimeout(()=>{
+      try{
+        if(!window.closed){
+          document.getElementById('backBtn').classList.remove('hidden');
+        }
+      }catch(e){
+        document.getElementById('backBtn').classList.remove('hidden');
+      }
+    },250);
+
+  },80);
+}
+
+function acceptCode(code){
+  if(locked) return;
 
   locked=true;
   acceptedCode=code;
+  ackReceived=false;
 
   try{
-    if(navigator.vibrate)navigator.vibrate(120);
+    if(navigator.vibrate) navigator.vibrate(100);
   }catch(e){}
 
-  await releaseCamera();
-
   document.getElementById('resultCode').textContent=code;
+  document.getElementById('resultMsg').textContent='Enviando al inventario…';
   document.getElementById('resultBox').classList.remove('hidden');
 
-  if(window.opener&&!window.opener.closed){
+  /*
+   * PRIMERO enviamos el código.
+   * No esperamos a detener la cámara antes de comunicarnos:
+   * esto hace el regreso mucho más rápido.
+   */
+  if(window.opener && !window.opener.closed){
     try{
-      window.opener.postMessage({
-        source:'la-real-scanner',
-        type:'barcode',
-        code:code
-      },'*');
+      window.opener.postMessage(
+        {
+          source:'la-real-scanner',
+          type:'barcode',
+          code:code
+        },
+        '*'
+      );
 
-      document.getElementById('resultMsg').textContent=
-        'Código enviado. Volviendo al inventario…';
+      /*
+       * Esperamos una confirmación real de Apps Script.
+       * Si llega, cerramos inmediatamente.
+       */
+      ackTimer=setTimeout(()=>{
+        if(ackReceived) return;
 
-      setTimeout(()=>{
-        try{window.close()}catch(e){}
+        /*
+         * Si Safari anuló window.opener, usamos la URL pública
+         * de Apps Script como respaldo.
+         */
+        const returnUrl=getReturnUrl();
 
-        setTimeout(()=>{
-          try{
-            if(!window.closed){
-              document.getElementById('backBtn').classList.remove('hidden');
-            }
-          }catch(e){
-            document.getElementById('backBtn').classList.remove('hidden');
-          }
-        },700);
+        if(returnUrl){
+          releaseCamera();
+
+          const separator=returnUrl.includes('?') ? '&' : '?';
+
+          location.replace(
+            returnUrl+
+            separator+
+            'code='+
+            encodeURIComponent(code)
+          );
+
+          return;
+        }
+
+        releaseCamera();
+
+        document.getElementById('resultMsg').textContent=
+          'Código leído. Volvé al inventario.';
+
+        document.getElementById('backBtn').classList.remove('hidden');
 
       },700);
 
@@ -455,43 +436,82 @@ async function acceptCode(code){
     }
   }
 
-  returnToInventory();
+  /*
+   * Sin opener: usamos únicamente una URL de retorno válida.
+   */
+  const returnUrl=getReturnUrl();
+
+  if(returnUrl){
+    releaseCamera();
+
+    const separator=returnUrl.includes('?') ? '&' : '?';
+
+    location.replace(
+      returnUrl+
+      separator+
+      'code='+
+      encodeURIComponent(code)
+    );
+
+    return;
+  }
+
+  releaseCamera();
+
+  document.getElementById('resultMsg').textContent=
+    'Código leído. Volvé al inventario.';
+
+  document.getElementById('backBtn').classList.remove('hidden');
 }
 
-function getReturnUrl(){
-  try{
-    const params=new URLSearchParams(location.search);
-    return params.get('returnUrl')||params.get('callback')||'';
-  }catch(e){
-    return '';
+window.addEventListener('message',ev=>{
+  if(
+    ev.data &&
+    ev.data.source==='la-real-inventory' &&
+    ev.data.type==='barcode-ack'
+  ){
+    ackReceived=true;
+
+    if(ackTimer){
+      clearTimeout(ackTimer);
+      ackTimer=null;
+    }
+
+    document.getElementById('resultMsg').textContent=
+      'Artículo recibido. Volviendo…';
+
+    closeAfterAck();
   }
-}
+});
 
 function returnToInventory(){
   const returnUrl=getReturnUrl();
 
-  if(returnUrl&&acceptedCode){
-    const separator=returnUrl.includes('?')?'&':'?';
+  if(returnUrl && acceptedCode){
+    releaseCamera();
 
-    location.href=
+    const separator=returnUrl.includes('?') ? '&' : '?';
+
+    location.replace(
       returnUrl+
       separator+
       'code='+
-      encodeURIComponent(acceptedCode);
+      encodeURIComponent(acceptedCode)
+    );
 
     return;
   }
 
   try{window.close()}catch(e){}
-  document.getElementById('backBtn').classList.remove('hidden');
 }
 
 async function cancelReader(){
   locked=true;
+
   await releaseCamera();
 
   try{
-    if(window.opener&&!window.opener.closed){
+    if(window.opener && !window.opener.closed){
       window.close();
       return;
     }
@@ -500,7 +520,7 @@ async function cancelReader(){
   const returnUrl=getReturnUrl();
 
   if(returnUrl){
-    location.href=returnUrl;
+    location.replace(returnUrl);
     return;
   }
 
@@ -509,12 +529,9 @@ async function cancelReader(){
 
 function cameraErrorMessage(err){
   const name=String(err&&err.name||'');
-  const message=String(err&&err.message||'');
-
-  console.log('CAMERA ERROR:',name,message);
 
   if(/NotAllowed|PermissionDenied/i.test(name)){
-    return 'Safari/Chrome no permitió iniciar la cámara. Tocá ACTIVAR CÁMARA para reintentar.';
+    return 'El navegador no permitió iniciar la cámara. Tocá ACTIVAR CÁMARA para reintentar.';
   }
 
   if(/NotReadable|TrackStart|Abort/i.test(name)){
@@ -525,29 +542,14 @@ function cameraErrorMessage(err){
     return 'No encontré una cámara disponible.';
   }
 
-  if(/Overconstrained/i.test(name)){
-    return 'No pude seleccionar la cámara trasera. Tocá ACTIVAR CÁMARA para reintentar.';
-  }
-
   return 'No pude iniciar la cámara. Tocá ACTIVAR CÁMARA para reintentar.';
 }
 
-window.addEventListener('pagehide',()=>{
-  releaseCamera();
-});
-
-window.addEventListener('beforeunload',()=>{
-  releaseCamera();
-});
-
-window.addEventListener('pageshow',async event=>{
-  if(event.persisted){
-    await releaseCamera();
-  }
-});
+window.addEventListener('pagehide',releaseCamera);
+window.addEventListener('beforeunload',releaseCamera);
 
 window.addEventListener('load',()=>{
-  setTimeout(startScanner,350);
+  setTimeout(startScanner,250);
 });
 </script>
 
