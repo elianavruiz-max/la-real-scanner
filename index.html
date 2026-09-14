@@ -6,15 +6,15 @@
   <title>Lector La Real</title>
 
   <style>
-    :root {
+    :root{
       --olive:#556B2F;
       --cream:#F7F3EA;
       --dark:#222;
     }
 
-    * { box-sizing:border-box; }
+    *{box-sizing:border-box}
 
-    html,body {
+    html,body{
       margin:0;
       width:100%;
       height:100%;
@@ -22,35 +22,35 @@
       font-family:Arial,Helvetica,sans-serif;
     }
 
-    body { color:#fff; }
+    body{color:#fff}
 
-    #scanner {
+    #scanner{
       position:fixed;
       inset:0;
       overflow:hidden;
       background:#111;
     }
 
-    #scanner video {
-      width:100% !important;
-      height:100% !important;
-      object-fit:cover !important;
+    #scanner video{
+      width:100%!important;
+      height:100%!important;
+      object-fit:cover!important;
     }
 
-    #scanner canvas {
+    #scanner canvas{
       position:absolute;
       inset:0;
-      width:100% !important;
-      height:100% !important;
+      width:100%!important;
+      height:100%!important;
     }
 
-    .shade {
+    .shade{
       position:fixed;
       inset:0;
       pointer-events:none;
     }
 
-    .guide {
+    .guide{
       position:absolute;
       left:6%;
       right:6%;
@@ -61,7 +61,7 @@
       box-shadow:0 0 0 9999px rgba(0,0,0,.40);
     }
 
-    .line {
+    .line{
       position:absolute;
       left:5%;
       right:5%;
@@ -70,7 +70,7 @@
       background:rgba(255,255,255,.9);
     }
 
-    .top {
+    .top{
       position:fixed;
       top:0;
       left:0;
@@ -81,9 +81,9 @@
       z-index:10;
     }
 
-    .top b { font-size:20px; }
+    .top b{font-size:20px}
 
-    .bottom {
+    .bottom{
       position:fixed;
       bottom:0;
       left:0;
@@ -94,14 +94,14 @@
       text-align:center;
     }
 
-    #status {
+    #status{
       min-height:24px;
       font-size:16px;
       font-weight:bold;
       margin-bottom:10px;
     }
 
-    button {
+    button{
       width:100%;
       max-width:460px;
       border:0;
@@ -112,21 +112,21 @@
       margin:5px auto;
     }
 
-    .primary {
+    .primary{
       background:var(--olive);
       color:#fff;
     }
 
-    .secondary {
+    .secondary{
       background:#fff;
       color:#222;
     }
 
-    .hidden {
-      display:none !important;
+    .hidden{
+      display:none!important;
     }
 
-    #resultBox {
+    #resultBox{
       position:fixed;
       inset:0;
       z-index:30;
@@ -140,7 +140,7 @@
       text-align:center;
     }
 
-    #resultCode {
+    #resultCode{
       font-size:32px;
       font-weight:bold;
       word-break:break-all;
@@ -167,109 +167,76 @@
 <div class="bottom">
   <div id="status">Preparando cámara…</div>
 
-  <button
-    id="retryBtn"
-    class="primary hidden"
-    onclick="manualStart()">
+  <button id="retryBtn" class="primary hidden" onclick="manualStart()">
     ACTIVAR CÁMARA
   </button>
 
-  <button
-    class="secondary"
-    onclick="cancelReader()">
+  <button class="secondary" onclick="cancelReader()">
     CANCELAR
   </button>
 </div>
 
 <div id="resultBox" class="hidden">
   <div>Código detectado</div>
-
   <div id="resultCode"></div>
+  <div id="resultMsg">Volviendo al inventario…</div>
 
-  <div id="resultMsg">
-    Volviendo al inventario…
-  </div>
-
-  <button
-    id="backBtn"
-    class="secondary hidden"
-    onclick="returnToInventory()">
+  <button id="backBtn" class="secondary hidden" onclick="returnToInventory()">
     VOLVER AL INVENTARIO
   </button>
 </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.12.1/dist/quagga.min.js"></script>
 
 <script>
+let running=false;
+let starting=false;
+let locked=false;
+let acceptedCode='';
+let candidateCode='';
+let candidateCount=0;
+let candidateAt=0;
+let lastProcessedAt=0;
 
-let running = false;
-let starting = false;
-let locked = false;
-
-let acceptedCode = '';
-
-let candidateCode = '';
-let candidateCount = 0;
-let candidateAt = 0;
-
-let cameraTrack = null;
-
-
-/* =========================================================
-   INTERFAZ
-========================================================= */
-
-function setStatus(text) {
-  document.getElementById('status').textContent = text;
+function setStatus(text){
+  document.getElementById('status').textContent=text;
 }
 
-function showRetry() {
+function showRetry(){
   document.getElementById('retryBtn').classList.remove('hidden');
 }
 
-function hideRetry() {
+function hideRetry(){
   document.getElementById('retryBtn').classList.add('hidden');
 }
 
-
-/* =========================================================
-   CONFIGURACIÓN QUAGGA
-========================================================= */
-
-function scannerConfig() {
-
+function scannerConfig(){
   return {
-
-    inputStream: {
-
+    inputStream:{
       name:'Live',
       type:'LiveStream',
-
       target:document.querySelector('#scanner'),
-
       constraints:{
-        facingMode:{
-          ideal:'environment'
-        }
+        facingMode:{ideal:'environment'},
+        width:{ideal:1920},
+        height:{ideal:1080},
+        aspectRatio:{ideal:1.7777778}
       },
-
       area:{
-        top:'30%',
-        right:'5%',
-        left:'5%',
-        bottom:'30%'
+        top:'28%',
+        right:'4%',
+        left:'4%',
+        bottom:'28%'
       }
     },
 
     locator:{
       patchSize:'medium',
-      halfSample:true
+      halfSample:false
     },
 
-    numOfWorkers:1,
-
-    frequency:10,
+    numOfWorkers:Math.max(1,Math.min(2,navigator.hardwareConcurrency||2)),
+    frequency:15,
 
     decoder:{
       readers:[
@@ -279,7 +246,6 @@ function scannerConfig() {
         'upc_e_reader',
         'code_128_reader'
       ],
-
       multiple:false
     },
 
@@ -287,687 +253,302 @@ function scannerConfig() {
   };
 }
 
+async function releaseCamera(){
+  try{Quagga.offDetected(onDetected)}catch(e){}
+  try{Quagga.stop()}catch(e){}
 
-/* =========================================================
-   LIBERAR CÁMARA
-========================================================= */
-
-async function releaseCamera() {
-
-  try {
-    Quagga.offDetected(onDetected);
-  } catch(e) {}
-
-  try {
-    Quagga.stop();
-  } catch(e) {}
-
-  try {
-
-    const track = Quagga.CameraAccess &&
-                  Quagga.CameraAccess.getActiveTrack
-      ? Quagga.CameraAccess.getActiveTrack()
-      : null;
-
-    if(track) {
-      try { track.stop(); } catch(e) {}
-    }
-
-  } catch(e) {}
-
-  try {
-
-    const video = document.querySelector('#scanner video');
-
-    if(video) {
-
-      const stream = video.srcObject;
-
-      if(stream && stream.getTracks) {
-
-        stream.getTracks().forEach(track => {
-
-          try {
-            track.stop();
-          } catch(e) {}
-
+  try{
+    const video=document.querySelector('#scanner video');
+    if(video){
+      const stream=video.srcObject;
+      if(stream&&stream.getTracks){
+        stream.getTracks().forEach(t=>{
+          try{t.stop()}catch(e){}
         });
-
       }
-
-      try {
-        video.pause();
-      } catch(e) {}
-
-      try {
-        video.srcObject = null;
-      } catch(e) {}
+      try{video.pause()}catch(e){}
+      try{video.srcObject=null}catch(e){}
     }
+  }catch(e){}
 
-  } catch(e) {}
+  running=false;
+  starting=false;
 
-  cameraTrack = null;
-
-  running = false;
-  starting = false;
-
-  /*
-   * Safari necesita un pequeño margen para terminar
-   * de liberar físicamente la cámara.
-   */
-  await new Promise(resolve => setTimeout(resolve,350));
+  await new Promise(resolve=>setTimeout(resolve,300));
 }
 
+async function startScanner(){
+  if(running||starting||locked)return;
 
-/* =========================================================
-   INICIAR CÁMARA
-========================================================= */
-
-async function startScanner() {
-
-  if(running || starting || locked)
-    return;
-
-  starting = true;
-
+  starting=true;
   hideRetry();
-
   setStatus('Solicitando cámara trasera…');
 
-  if(
-    !navigator.mediaDevices ||
-    !navigator.mediaDevices.getUserMedia
-  ) {
-
-    starting = false;
-
-    setStatus(
-      'Este navegador no permite utilizar la cámara.'
-    );
-
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    starting=false;
+    setStatus('Este navegador no permite utilizar la cámara.');
     showRetry();
-
     return;
   }
 
-
-  /*
-   * Antes de iniciar una cámara nueva,
-   * nos aseguramos de que no haya quedado
-   * ningún stream anterior.
-   */
-
   await releaseCamera();
+  starting=true;
 
-  starting = true;
-
-
-  try {
-
+  try{
     await new Promise((resolve,reject)=>{
-
-      Quagga.init(
-        scannerConfig(),
-        err => err ? reject(err) : resolve()
-      );
-
+      Quagga.init(scannerConfig(),err=>err?reject(err):resolve());
     });
-
 
     Quagga.offDetected(onDetected);
     Quagga.onDetected(onDetected);
-
-
     Quagga.start();
 
-    running = true;
-    starting = false;
-
+    running=true;
+    starting=false;
     setStatus('Apuntá al código de barras');
 
-
-    /*
-     * Guardamos referencia al track real.
-     */
-
-    try {
-
-      cameraTrack =
-        Quagga.CameraAccess.getActiveTrack();
-
-    } catch(e) {}
-
-
-    /*
-     * Intentamos foco continuo.
-     * Si iPhone no lo soporta,
-     * simplemente continuamos.
-     */
-
     setTimeout(async()=>{
+      try{
+        const track=Quagga.CameraAccess.getActiveTrack();
+        if(!track||!track.getCapabilities)return;
 
-      try {
+        const caps=track.getCapabilities();
+        const advanced={};
 
-        const track =
-          Quagga.CameraAccess.getActiveTrack();
-
-        if(
-          !track ||
-          !track.getCapabilities
-        ) return;
-
-
-        const caps =
-          track.getCapabilities();
-
-        const advanced = {};
-
-
-        if(
-          Array.isArray(caps.focusMode) &&
-          caps.focusMode.includes('continuous')
-        ) {
-
-          advanced.focusMode =
-            'continuous';
-
+        if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous')){
+          advanced.focusMode='continuous';
         }
 
-
-        if(
-          Object.keys(advanced).length
-        ) {
-
-          await track.applyConstraints({
-            advanced:[advanced]
-          });
-
+        if(caps.zoom&&typeof caps.zoom.min==='number'&&typeof caps.zoom.max==='number'){
+          const wanted=Math.min(caps.zoom.max,Math.max(caps.zoom.min,1.5));
+          advanced.zoom=wanted;
         }
 
-      } catch(e) {}
+        if(Object.keys(advanced).length){
+          await track.applyConstraints({advanced:[advanced]});
+        }
+      }catch(e){
+        console.log('Foco/zoom no disponible:',e);
+      }
+    },700);
 
-    },500);
-
-
-  } catch(err) {
-
-    console.error(
-      'ERROR CAMARA:',
-      err
-    );
-
-    running = false;
-    starting = false;
-
+  }catch(err){
+    console.error('ERROR CAMARA:',err);
+    running=false;
+    starting=false;
     await releaseCamera();
-
-    setStatus(
-      cameraErrorMessage(err)
-    );
-
+    setStatus(cameraErrorMessage(err));
     showRetry();
   }
 }
 
-
-/* =========================================================
-   BOTÓN ACTIVAR
-========================================================= */
-
-async function manualStart() {
-
-  locked = false;
-
-  candidateCode = '';
-  candidateCount = 0;
-  candidateAt = 0;
+async function manualStart(){
+  locked=false;
+  candidateCode='';
+  candidateCount=0;
+  candidateAt=0;
+  lastProcessedAt=0;
 
   await releaseCamera();
-
-  /*
-   * Esperamos un poco más en Safari antes
-   * de solicitar nuevamente la cámara.
-   */
-
-  setTimeout(
-    startScanner,
-    500
-  );
+  setTimeout(startScanner,450);
 }
 
+function validEAN13(code){
+  if(!/^\d{13}$/.test(code))return false;
 
-/* =========================================================
-   DETECCIÓN
-========================================================= */
+  const d=code.split('').map(Number);
+  let sum=0;
 
-function onDetected(result) {
-
-  if(
-    locked ||
-    !result ||
-    !result.codeResult
-  ) return;
-
-
-  const code =
-    String(
-      result.codeResult.code || ''
-    ).trim();
-
-
-  if(
-    !code ||
-    code.length < 3
-  ) return;
-
-
-  const now =
-    Date.now();
-
-
-  if(
-    code === candidateCode &&
-    now - candidateAt < 1800
-  ) {
-
-    candidateCount++;
-
-  } else {
-
-    candidateCode = code;
-    candidateCount = 1;
-
+  for(let i=0;i<12;i++){
+    sum+=d[i]*(i%2===0?1:3);
   }
 
+  const check=(10-(sum%10))%10;
+  return check===d[12];
+}
 
-  candidateAt = now;
+function onDetected(result){
+  if(locked||!result||!result.codeResult)return;
 
+  const now=Date.now();
 
-  if(candidateCount < 2) {
+  /* Evita procesar demasiados callbacks idénticos en milisegundos. */
+  if(now-lastProcessedAt<120)return;
+  lastProcessedAt=now;
 
-    setStatus(
-      'Confirmando ' +
-      code +
-      '…'
-    );
+  const code=String(result.codeResult.code||'').trim();
 
+  if(!code||code.length<3)return;
+
+  /*
+   * Los EAN-13 con dígito verificador correcto se aceptan más rápido.
+   * Para otros formatos mantenemos confirmación doble.
+   */
+  if(validEAN13(code)){
+    setStatus('Código detectado: '+code);
+    acceptCode(code);
     return;
   }
 
+  if(code===candidateCode&&now-candidateAt<2200){
+    candidateCount++;
+  }else{
+    candidateCode=code;
+    candidateCount=1;
+  }
+
+  candidateAt=now;
+
+  if(candidateCount<2){
+    setStatus('Confirmando '+code+'…');
+    return;
+  }
 
   acceptCode(code);
 }
 
+async function acceptCode(code){
+  if(locked)return;
 
-/* =========================================================
-   CÓDIGO ACEPTADO
-========================================================= */
+  locked=true;
+  acceptedCode=code;
 
-async function acceptCode(code) {
-
-  if(locked)
-    return;
-
-  locked = true;
-
-  acceptedCode = code;
-
-
-  try {
-
-    if(navigator.vibrate)
-      navigator.vibrate(120);
-
-  } catch(e) {}
-
-
-  /*
-   * MUY IMPORTANTE:
-   * liberamos totalmente la cámara
-   * antes de volver al inventario.
-   */
+  try{
+    if(navigator.vibrate)navigator.vibrate(120);
+  }catch(e){}
 
   await releaseCamera();
 
+  document.getElementById('resultCode').textContent=code;
+  document.getElementById('resultBox').classList.remove('hidden');
 
-  document.getElementById(
-    'resultCode'
-  ).textContent = code;
+  if(window.opener&&!window.opener.closed){
+    try{
+      window.opener.postMessage({
+        source:'la-real-scanner',
+        type:'barcode',
+        code:code
+      },'*');
 
-
-  document.getElementById(
-    'resultBox'
-  ).classList.remove('hidden');
-
-
-  /*
-   * Enviamos el código a la Web App.
-   */
-
-  if(
-    window.opener &&
-    !window.opener.closed
-  ) {
-
-    try {
-
-      window.opener.postMessage(
-        {
-          source:'la-real-scanner',
-          type:'barcode',
-          code:code
-        },
-        '*'
-      );
-
-
-      document.getElementById(
-        'resultMsg'
-      ).textContent =
+      document.getElementById('resultMsg').textContent=
         'Código enviado. Volviendo al inventario…';
 
-
-      /*
-       * Le damos tiempo a Safari para terminar
-       * de liberar la cámara ANTES de cerrar.
-       */
-
       setTimeout(()=>{
-
-        try {
-          window.close();
-        } catch(e) {}
-
+        try{window.close()}catch(e){}
 
         setTimeout(()=>{
-
-          if(!window.closed) {
-
-            document.getElementById(
-              'backBtn'
-            ).classList.remove('hidden');
-
+          try{
+            if(!window.closed){
+              document.getElementById('backBtn').classList.remove('hidden');
+            }
+          }catch(e){
+            document.getElementById('backBtn').classList.remove('hidden');
           }
-
         },700);
 
       },700);
 
-
       return;
 
-    } catch(e) {
-
+    }catch(e){
       console.error(e);
-
     }
   }
-
-
-  /*
-   * Si Safari abrió el lector en la misma pestaña,
-   * regresamos mediante returnUrl.
-   */
 
   returnToInventory();
 }
 
-
-/* =========================================================
-   VOLVER AL INVENTARIO
-========================================================= */
-
-function getReturnUrl() {
-
-  try {
-
-    const params =
-      new URLSearchParams(
-        location.search
-      );
-
-    return (
-      params.get('returnUrl') ||
-      params.get('callback') ||
-      ''
-    );
-
-  } catch(e) {
-
+function getReturnUrl(){
+  try{
+    const params=new URLSearchParams(location.search);
+    return params.get('returnUrl')||params.get('callback')||'';
+  }catch(e){
     return '';
-
   }
 }
 
+function returnToInventory(){
+  const returnUrl=getReturnUrl();
 
-function returnToInventory() {
+  if(returnUrl&&acceptedCode){
+    const separator=returnUrl.includes('?')?'&':'?';
 
-  const returnUrl =
-    getReturnUrl();
-
-
-  if(
-    returnUrl &&
-    acceptedCode
-  ) {
-
-    const separator =
-      returnUrl.includes('?')
-        ? '&'
-        : '?';
-
-
-    location.href =
-      returnUrl +
-      separator +
-      'code=' +
-      encodeURIComponent(
-        acceptedCode
-      );
+    location.href=
+      returnUrl+
+      separator+
+      'code='+
+      encodeURIComponent(acceptedCode);
 
     return;
   }
 
-
-  try {
-
-    window.close();
-
-  } catch(e) {}
-
-
-  document.getElementById(
-    'backBtn'
-  ).classList.remove('hidden');
+  try{window.close()}catch(e){}
+  document.getElementById('backBtn').classList.remove('hidden');
 }
 
-
-/* =========================================================
-   CANCELAR
-========================================================= */
-
-async function cancelReader() {
-
-  locked = true;
-
+async function cancelReader(){
+  locked=true;
   await releaseCamera();
 
-
-  try {
-
-    if(
-      window.opener &&
-      !window.opener.closed
-    ) {
-
+  try{
+    if(window.opener&&!window.opener.closed){
       window.close();
-
       return;
     }
+  }catch(e){}
 
-  } catch(e) {}
+  const returnUrl=getReturnUrl();
 
-
-  const returnUrl =
-    getReturnUrl();
-
-
-  if(returnUrl) {
-
-    location.href =
-      returnUrl;
-
+  if(returnUrl){
+    location.href=returnUrl;
     return;
   }
-
 
   history.back();
 }
 
+function cameraErrorMessage(err){
+  const name=String(err&&err.name||'');
+  const message=String(err&&err.message||'');
 
-/* =========================================================
-   MENSAJES DE ERROR
-========================================================= */
+  console.log('CAMERA ERROR:',name,message);
 
-function cameraErrorMessage(err) {
-
-  const name =
-    String(
-      err &&
-      err.name ||
-      ''
-    );
-
-
-  const message =
-    String(
-      err &&
-      err.message ||
-      ''
-    );
-
-
-  console.log(
-    'CAMERA ERROR:',
-    name,
-    message
-  );
-
-
-  if(
-    /NotAllowed|PermissionDenied/i.test(name)
-  ) {
-
-    return (
-      'Safari no permitió iniciar la cámara. ' +
-      'Tocá ACTIVAR CÁMARA para intentarlo nuevamente.'
-    );
-
+  if(/NotAllowed|PermissionDenied/i.test(name)){
+    return 'Safari/Chrome no permitió iniciar la cámara. Tocá ACTIVAR CÁMARA para reintentar.';
   }
 
-
-  if(
-    /NotReadable|TrackStart|Abort/i.test(name)
-  ) {
-
-    return (
-      'La cámara todavía está ocupada. ' +
-      'Esperá un momento y tocá ACTIVAR CÁMARA.'
-    );
-
+  if(/NotReadable|TrackStart|Abort/i.test(name)){
+    return 'La cámara todavía está ocupada. Esperá un momento y tocá ACTIVAR CÁMARA.';
   }
 
-
-  if(
-    /NotFound|DevicesNotFound/i.test(name)
-  ) {
-
-    return (
-      'No encontré una cámara disponible.'
-    );
-
+  if(/NotFound|DevicesNotFound/i.test(name)){
+    return 'No encontré una cámara disponible.';
   }
 
-
-  if(
-    /Overconstrained/i.test(name)
-  ) {
-
-    return (
-      'No pude seleccionar la cámara trasera. ' +
-      'Tocá ACTIVAR CÁMARA para reintentar.'
-    );
-
+  if(/Overconstrained/i.test(name)){
+    return 'No pude seleccionar la cámara trasera. Tocá ACTIVAR CÁMARA para reintentar.';
   }
 
-
-  return (
-    'No pude iniciar la cámara. ' +
-    'Tocá ACTIVAR CÁMARA para reintentar.'
-  );
+  return 'No pude iniciar la cámara. Tocá ACTIVAR CÁMARA para reintentar.';
 }
 
+window.addEventListener('pagehide',()=>{
+  releaseCamera();
+});
 
-/* =========================================================
-   CICLO DE VIDA SAFARI
-========================================================= */
+window.addEventListener('beforeunload',()=>{
+  releaseCamera();
+});
 
-window.addEventListener(
-  'pagehide',
-  ()=>{
-    releaseCamera();
+window.addEventListener('pageshow',async event=>{
+  if(event.persisted){
+    await releaseCamera();
   }
-);
+});
 
-
-window.addEventListener(
-  'beforeunload',
-  ()=>{
-    releaseCamera();
-  }
-);
-
-
-/*
- * Cuando Safari vuelve a mostrar una página
- * guardada en memoria, liberamos cualquier
- * stream viejo.
- */
-
-window.addEventListener(
-  'pageshow',
-  async event=>{
-
-    if(event.persisted) {
-
-      await releaseCamera();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   ARRANQUE
-========================================================= */
-
-window.addEventListener(
-  'load',
-  ()=>{
-
-    /*
-     * Pequeña espera para Safari.
-     */
-
-    setTimeout(
-      startScanner,
-      350
-    );
-
-  }
-);
-
+window.addEventListener('load',()=>{
+  setTimeout(startScanner,350);
+});
 </script>
 
 </body>
