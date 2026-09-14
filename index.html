@@ -208,6 +208,7 @@
 
     async function acceptCode(code) {
       if (locked) return;
+
       locked = true;
       acceptedCode = code;
 
@@ -220,6 +221,10 @@
       document.getElementById('resultCode').textContent = code;
       document.getElementById('resultBox').classList.remove('hidden');
 
+      /*
+       * Camino 1: si el navegador conserva window.opener,
+       * enviamos el código a la pantalla de inventario y cerramos.
+       */
       if (window.opener && !window.opener.closed) {
         try {
           window.opener.postMessage({
@@ -228,21 +233,85 @@
             code:code
           }, '*');
 
-          document.getElementById('resultMsg').textContent = 'Código enviado. Volviendo al inventario…';
+          document.getElementById('resultMsg').textContent =
+            'Código enviado. Volviendo al inventario…';
+
           setTimeout(() => {
             try { window.close(); } catch (e) {}
-            // Si Safari no permite cerrar, dejamos un botón visible.
+
             setTimeout(() => {
-              document.getElementById('backBtn').classList.remove('hidden');
-            }, 400);
-          }, 450);
+              try {
+                if (!window.closed) {
+                  document.getElementById('backBtn').classList.remove('hidden');
+                }
+              } catch (e) {
+                document.getElementById('backBtn').classList.remove('hidden');
+              }
+            }, 350);
+          }, 250);
+
           return;
+
         } catch (e) {
           console.error(e);
         }
       }
 
-      document.getElementById('resultMsg').textContent = 'No pude volver automáticamente. Copiá el código y regresá al inventario.';
+      /*
+       * Camino 2 (iPhone/Safari y algunos Android):
+       * Apps Script puede abrir GitHub sin window.opener.
+       * En ese caso volvemos automáticamente a la URL PÚBLICA
+       * script.google.com/macros/s/.../exec.
+       */
+      const params = new URLSearchParams(location.search);
+      const returnUrl = String(params.get('returnUrl') || '');
+      const inventoryId = String(params.get('inventoryId') || '');
+      const scanToken = String(params.get('scanToken') || '');
+
+      if (returnUrl) {
+        try {
+          const u = new URL(returnUrl);
+
+          /*
+           * Seguridad/estabilidad: solo aceptamos la URL pública
+           * oficial de la Web App de Google Apps Script.
+           */
+          if (
+            u.protocol === 'https:' &&
+            u.hostname === 'script.google.com' &&
+            u.pathname.indexOf('/macros/s/') !== -1
+          ) {
+            u.searchParams.set('code', code);
+
+            if (inventoryId) {
+              u.searchParams.set('inventoryId', inventoryId);
+            }
+
+            if (scanToken) {
+              u.searchParams.set('scanToken', scanToken);
+            }
+
+            document.getElementById('resultMsg').textContent =
+              'Código leído. Abriendo el artículo…';
+
+            /*
+             * replace evita que al tocar "atrás" Safari vuelva
+             * a la pantalla del código ya leído.
+             */
+            setTimeout(() => {
+              location.replace(u.toString());
+            }, 120);
+
+            return;
+          }
+
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      document.getElementById('resultMsg').textContent =
+        'Código leído. Tocá VOLVER AL INVENTARIO.';
       document.getElementById('copyBtn').classList.remove('hidden');
       document.getElementById('backBtn').classList.remove('hidden');
     }
@@ -256,8 +325,33 @@
 
     function closeReader() {
       stopScanner();
-      try { window.close(); } catch (e) {}
-      setTimeout(() => history.back(), 150);
+
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.close();
+          return;
+        }
+      } catch (e) {}
+
+      const params = new URLSearchParams(location.search);
+      const returnUrl = String(params.get('returnUrl') || '');
+
+      if (returnUrl) {
+        try {
+          const u = new URL(returnUrl);
+
+          if (
+            u.protocol === 'https:' &&
+            u.hostname === 'script.google.com' &&
+            u.pathname.indexOf('/macros/s/') !== -1
+          ) {
+            location.replace(u.toString());
+            return;
+          }
+        } catch (e) {}
+      }
+
+      history.back();
     }
 
     async function copyCode() {
